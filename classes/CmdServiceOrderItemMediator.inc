@@ -8,7 +8,7 @@ require_once('../include/TbsApi.inc');
 * TODO: 
 */
 
-abstract class cmsServiceOrderItemMediator
+abstract class CmdServiceOrderItemMediator
 {
 
 	/*
@@ -16,7 +16,7 @@ abstract class cmsServiceOrderItemMediator
 	* this only works for the product form/type 5 , VOIP DID
 	*
 	*/
-	function toTbsParentProductAuxVoice(ServiceOrderItem $serviceOrderItem, TbsProduct $tbsProduct){
+	function toTbsParentProduct(ServiceOrderItem $serviceOrderItem, TbsProduct $tbsProduct){
 		$id = $serviceOrderItem->getId();
 		$sql = "SELECT 
 				soi.*,
@@ -44,25 +44,10 @@ abstract class cmsServiceOrderItemMediator
 		// set the product properties
 		$tbsProduct->CustomersKey = (int) $tbsCustomersKey; //use int
 		$tbsProduct->LocationsKey = (int) $tbsLocationsKey; //use int, MUST EXIST DB
-		$tbsProduct->ProductID  = $itemId; // must be unique, appears to be a Alpha sku, or description
-		$tbsProduct->ProductFormsKey = 5; // this is the "VOIP DID" product form/type
+		$tbsProduct->ProductID  = rand(1, 1000000000); //$itemId; // must be unique, appears to be a Alpha sku, or description
+		$tbsProduct->ProductFormsKey = 2; 
 		//this is set by the api i think		$tbsProduct->ProductsKey =  0;
-		$tbsProduct->Status = "Pending";//($status) ? $status : "Pending"; //"Pending" definitly works with the API
-
-		/* minimum for "ProductsAux_Voice" product type 
-		* Your Precision Account Manager can help you determine
-		* the proper values for each Product Type based on your 
-		* configuration.
-		* note that the product type is an object
-		*/
-
-		//not needed, as this object structure will be returned when the defaults are called		$tbsProduct->ProductsAux_Voice = new stdClass();
-		$tbsProduct->ProductsAux_Voice->BTN = '5125551212';
-		$tbsProduct->ProductsAux_Voice->LkLineTypesKey = 1; //this is the "DID" type
-		$tbsProduct->ProductsAux_Voice->LkServiceTypesKey = 19; //this is for "VOIP Long Distance"
-		$tbsProduct->ProductsAux_Voice->E911ServTypeExtensionsCount = 1; //use int, cannot be null for this product type
-		//$tbsProduct->ProductsAux_Voice->ProductsAux_VoiceKey = 0; // appears to be assigned by TBS
-	    //$tbsProduct->ProductsAux_Voice->ProductsKey = 0; // appears to be assigned by TBS
+		$tbsProduct->Status = "Pending";//($status) ? $status : "Pending"; //"Pending" definitly works with the API : Active, Disconnected
 
 		return $tbsProduct;
 	}

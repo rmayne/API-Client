@@ -15,8 +15,8 @@ require_once("log4php/Logger.php");
 class TbsApi extends RestClient
 {
 	private static $_instance;
-	const TBSGUIURL = 'https://demo3.precisebillonline.com/OSNDemo/V35';
-	var $base_url = 'https://demo3.precisebillonline.com/OSNDemo/RestService/TBSRestService';
+	const TBSGUIURL = 'base url';
+	var $base_url = 'bas url';
 	var $content_type = 'application/json';
 	var $apikey = '';
 	var $api_status;
@@ -55,6 +55,7 @@ class TbsApi extends RestClient
 	function __construct() 
 	{
 		parent::__construct($this->base_url, $this->content_type);
+		curl_setopt($this->handler, CURLOPT_SSLVERSION, 6);
 		Logger::configure('../config/log4php_TbsApi.xml');
 		$this->Logger = Logger::getLogger(__CLASS__);
 	}
@@ -65,13 +66,13 @@ class TbsApi extends RestClient
 	public static function getInstance() {
 	    if(is_null(self::$_instance)) {
 			self::$_instance = new self();
-			//self::$_instance->Logger->debug("TBSAPI is using the apikey of cms ".$GLOBALS['cms_server']);
-			self::$_instance->apikey = ($GLOBALS['cms_server'] == 'Dev') ? 'EXAMPLE ONLY' : 'EXAMPLE ONLY';
-			self::$_instance->addHeader("User-Agent: cms3");
+			self::$_instance->base_url = (isDev() || isPreprod() || isUat()) ? 'base url here' : 'base url here';
+			self::$_instance->apikey = ($GLOBALS['cmd_server'] == 'Dev') ? 'no pass' : 'no pass';
+			self::$_instance->addHeader("User-Agent: CMD3");
 			self::$_instance->addHeader("Authorization: Basic " . self::$_instance->apikey);
 			self::$_instance->addHeader("Content-type: application/json");
 			self::$_instance->addHeader("Accept: application/json");
-			self::$_instance->addHeader("Host: EXAMPLE ONLY");
+			self::$_instance->addHeader("Host: demo3.precisebillonline.com");
 		}
 		return self::$_instance;
 	}
@@ -150,7 +151,22 @@ class TbsApi extends RestClient
 		$this->get($resourceUrl);
 
 		// check the request status
-		if($this->status_code != 200){
+		if($this->status_code == 0){
+			$this->Logger->error(
+				sprintf(
+					'GET Call for resource \'%s\' Failed.
+					Status: %d,
+					Request: %s,
+					API Error Message: 
+					%s',
+					$resourceUrl,
+					$this->status_code,
+					$this->request_body_raw,
+					'The Service Did Not Respond'
+				)
+			);
+			throw new Exception('The Service Failed to Respond.');
+		 } elseif ($this->status_code != 200){
 			$this->Logger->error(
 				sprintf(
 					'GET Call for resource \'%s\' Failed.
@@ -164,7 +180,7 @@ class TbsApi extends RestClient
 					$this->response_body
 				)
 			);
-			return false;
+			throw new Exception($this->response_body);
 		} else {
 			return $this->response_parsed;
 		}
@@ -195,7 +211,7 @@ class TbsApi extends RestClient
 					$this->response_body
 				)
 			);
-			return false;
+			throw new Exception($this->response_body);
 		} else {
 			return $this->response_parsed;
 		}
@@ -229,7 +245,7 @@ class TbsApi extends RestClient
 					$this->response_body
 				)
 			);
-			return false;
+			throw new Exception($this->response_body);
 		} else {
 			return $this->response_parsed;
 		}
@@ -492,6 +508,13 @@ class TbsApi extends RestClient
 		}
 	}
 
+	/*
+	* Author: Reiser Mayne
+	* get the tbs customer key from the tbs account number
+	* params: tbs acccount number
+	*
+	*
+	*/
 	function getCustomersKeyFromAccountNumber($tbsAccountNumber){
 		// build filter
 		$filters = array(
@@ -507,6 +530,57 @@ class TbsApi extends RestClient
 		if($tbsResult[0]->CustomersKey) {
 			return $tbsResult[0]->CustomersKey;
 		} else {
+			return false;
+		}
+	}
+
+
+	/*
+	* Author: Reiser Mayne
+	* Date 4/8/2016
+	* Description: looks up the passed zipcode in order to determine if its taxable in that city
+	* return : true if in the city, false if ourside the city or if its unknown
+	*/
+	function isZipInCity($zip){
+		$filters = array(
+			array(
+					"field" => 'Zip',
+					"filter" => 'Equal',
+					"value" => $zip
+				)
+		);
+		$tbsResult = $this->getResource('lkzipcodes', null, 'All', $filters);
+		$count = count($tbsResult);
+			if($count > 1){
+				foreach ($tbsResult as $zipCodeRecord) {
+					if($zipCodeRecord->DEFAULT == "Y") {
+						$inCity = $zipCodeRecord->INOUTCITY;
+					}	
+				}
+			} elseif ($count == 1){
+				$inCity = $tbsResult[0]->INOUTCITY;
+			} else {
+				return false;
+			}
+
+		switch($inCity){
+			case "I":
+			// in city
+			return true;
+
+			case "O":
+			// out of city
+			return false;
+
+			case "B":
+			// both
+			return true;
+
+			case null:
+			// not set
+			return false;
+
+			default :
 			return false;
 		}
 	}

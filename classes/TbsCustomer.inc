@@ -64,13 +64,8 @@ class TbsCustomer extends TbsObject
 	*/
     function getDefaults(){
     	$baseId = $this->TbsApi->getBasesList()[0]->LkBaseInfoKey; //Arbitrarily grabs the first base ID available
-    	$resourceUrl = "/bases/$baseId/customerdefaults";
-		$result = $this->TbsApi->get($resourceUrl);
-		if($result){
-			return $this->applyData($result);
-		} else {
-			return false;
-		}
+    	$resourceUrl = "bases/$baseId/CustomerAddDefaults";
+		return $this->TbsApi->getResource($resourceUrl);
     }
 
 	/*

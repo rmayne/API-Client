@@ -7,7 +7,7 @@ require_once('../include/TbsCustomer.inc');
 * 
 */
 
-abstract class cmsClientBillingAccountMediator
+abstract class CmdClientBillingAccountMediator
 {
 
 	function toTbsCustomer(ClientBillingAccount $clientBillingAccount, TbsCustomer $TbsCustomer){
@@ -28,7 +28,7 @@ abstract class cmsClientBillingAccountMediator
 			$TbsCustomer->CountryName = sqlExecute($sql)->Fields('name');
 
 			//name should be looked up
-			$TbsCustomer->EnteredBy = 'cms Automation'; //$clientBillingAccount->createdby
+			$TbsCustomer->EnteredBy = 'CMD Automation'; //$clientBillingAccount->createdby
 
 		return $TbsCustomer;
 	}

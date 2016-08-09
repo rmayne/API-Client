@@ -13,17 +13,15 @@ class TbsObject {
 	*/
 	
 	function applyData($data){
-		$object = $this;
-		$data = get_object_vars($data);
-		foreach ($data as $key => $value) {
-			if(is_object($value)){
-				if(!property_exists($object, $key)){
-					$newObject = new stdClass();
-					$object->$key = $newObject;
+		$properties = get_object_vars($data);
+		foreach ($properties as $key => $value) {
+			if(property_exists($this, $key) && is_object($value)){
+				$properties2 = get_object_vars($value);
+				foreach ($properties2 as $key2 => $value2) {
+					$object->$key->$key2 = $value2;
 				}
-				$this->applyData($object->$key, $value);
 			} else {
-				$object->$key = $value;
+				$this->$key = $value;
 			}
 		}
 		return $this;

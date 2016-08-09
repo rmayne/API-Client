@@ -8,7 +8,7 @@ require_once('../include/TbsApi.inc');
 * TODO: 
 */
 
-abstract class cmsClientSiteMediator
+abstract class CmdClientSiteMediator
 {
 
 	function toTbsLocation(ClientSite $clientSite, TbsLocation $tbsLocation){
@@ -20,16 +20,17 @@ abstract class cmsClientSiteMediator
 
 		$sql = "SELECT name, code FROM country WHERE id = " . pg_escape_literal($clientSite->getCountryid());
 		$countryName = sqlExecute($sql)->Fields('name');
-		$cmsCountryCode = sqlExecute($sql)->Fields('code');
-		$tbsCountryCode = $tbsApi->getNumericCountryCode($cmsCountryCode);
+		$cmdCountryCode = sqlExecute($sql)->Fields('code');
+		$tbsCountryCode = $tbsApi->getNumericCountryCode($cmdCountryCode);
 
 		$tbsLocation->Name = $clientName;
+	    $tbsLocation->Description = $clientSite->getAddress1();
 		$tbsLocation->AddressLine1 = $clientSite->getAddress1();
 		$tbsLocation->AddressLine2 = $clientSite->getAddress2();
 		$tbsLocation->City = $clientSite->getCity(); 
 		$tbsLocation->State = $clientSite->getState();
 	    $tbsLocation->CountryCode = $tbsCountryCode;
-		$tbsLocation->ZipCode = $clientSite->getPostalcode(); 
+		$tbsLocation->ZipCode = $clientSite->getPostalcode(); // this is to pass TBS validation
 		$tbsLocation->CountryName = $countryName;
 		$tbsLocation->ContactEmail = $clientSite->getSiteemail();
 		$tbsLocation->MainPhone = $clientSite->getSitephone();
